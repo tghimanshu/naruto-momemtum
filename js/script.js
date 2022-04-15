@@ -58,7 +58,7 @@ taskInput.addEventListener("keypress", (e) => {
 task.addEventListener("dblclick", (e) => {
   e.target.style.display = "none";
   taskInput.value = e.target.innerHTML;
-  taskInput.style.display = "inline-block";)
+  taskInput.style.display = "inline-block";
 });
 
 /******************************
@@ -68,15 +68,59 @@ task.addEventListener("dblclick", (e) => {
 let strDate = localStorage.getItem("date");
 let date = new Date();
 let body = document.querySelector(".main-body");
-// console.log(`strDate -> ${strDate}\n date -> ${date.getDate().toString()}`);
 if (date.getDate().toString() === strDate) {
-  //   console.log("True");
   let imageUrl = localStorage.getItem("imageUrl");
-  body.style.backgroundImage = `url('wallpapers/${imageUrl}')`;
+  if (imageUrl.includes("http")) {
+    body.style.backgroundImage = `url(${imageUrl})`;
+    document.querySelector("#sub_cat").innerHTML = JSON.parse(
+      localStorage.getItem("wall_details")
+    ).sub_category;
+  } else {
+    body.style.backgroundImage = `url('wallpapers/${imageUrl}')`;
+  }
 } else {
-  localStorage.setItem("task", "");
-  let num = Math.floor(Math.random() * 30) + 1;
-  localStorage.setItem("imageUrl", `${num}.jpg`);
-  localStorage.setItem("date", date.getDate().toString());
-  body.style.backgroundImage = `url('wallpapers/${num}.jpg')`;
+  let pageNo = Math.floor(Math.random() * 500) + 1;
+  let indexNo = Math.floor(Math.random() * 10) + 1;
+  fetch(
+    `https://wall.alphacoders.com/api2.0/get.php?auth=0d52ba4842faf8b1e6fbff7313e786d5&method=category&id=3&page=${pageNo}&info_level=2`
+  )
+    .then((data) => data.json())
+    .then((wall) => {
+      const pic = wall.wallpapers[indexNo].url_image;
+      if (pic === "") {
+        let num = Math.floor(Math.random() * 30) + 1;
+        localStorage.setItem("imageUrl", `${num}.jpg`);
+        body.style.backgroundImage = `url('wallpapers/${num}.jpg')`;
+      } else {
+        localStorage.setItem("imageUrl", `${pic}`);
+        body.style.backgroundImage = `url(${pic})`;
+        localStorage.setItem(
+          "wall_details",
+          JSON.stringify(wall.wallpapers[indexNo])
+        );
+        document.querySelector("#sub_cat").innerHTML =
+          wall.wallpapers[indexNo].sub_category;
+      }
+      localStorage.setItem("task", "");
+      localStorage.setItem("date", date.getDate().toString());
+    })
+    .catch((err) => console.log("not working", err));
 }
+
+/******************************
+        FAVOURITE IMAGE
+*******************************/
+
+document
+  .querySelector("#favourite_pic")
+  .addEventListener("click", function (e) {
+    const pic = JSON.parse(localStorage.getItem("wall_details"));
+    localStorage.setItem(
+      "all_favs",
+      JSON.stringify(
+        JSON.parse(localStorage.getItem("all_favs"))
+          ? localStorage.getItem("all_favs").push(pic)
+          : pic
+      )
+    );
+  });
